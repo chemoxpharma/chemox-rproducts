@@ -16,6 +16,7 @@ interface ProductTableProps {
   products: Product[];
   category: ProductCategory;
   onUpdatePrice: (id: string, compliance: ComplianceType, price: number | null) => void;
+  isAdmin: boolean;
 }
 
 const categoryBadgeMap: Record<ProductCategory, string> = {
@@ -32,18 +33,20 @@ const complianceBadgeColors: Record<ComplianceType, string> = {
   IH: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
-export function ProductTable({ products, category, onUpdatePrice }: ProductTableProps) {
+export function ProductTable({ products, category, onUpdatePrice, isAdmin }: ProductTableProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
   const filtered = products.filter((p) => p.category === category);
 
   const startEdit = (productId: string, comp: ComplianceType, currentPrice: number | null) => {
+    if (!isAdmin) return;
     setEditingKey(`${productId}-${comp}`);
     setEditValue(currentPrice !== null ? String(currentPrice) : "");
   };
 
   const saveEdit = (productId: string, comp: ComplianceType) => {
+    if (!isAdmin) return;
     const val = editValue.trim();
     onUpdatePrice(productId, comp, val === "" ? null : parseFloat(val));
     setEditingKey(null);
@@ -120,11 +123,14 @@ export function ProductTable({ products, category, onUpdatePrice }: ProductTable
                               </button>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1 cursor-pointer" onClick={() => startEdit(product.id, comp, price)}>
+                            <div 
+                              className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer' : ''}`} 
+                              onClick={() => isAdmin && startEdit(product.id, comp, price)}
+                            >
                               <span className="font-mono">
                                 {price !== null ? `₹${price.toLocaleString("en-IN")}` : "—"}
                               </span>
-                              <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+                              {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />}
                             </div>
                           )}
                         </div>

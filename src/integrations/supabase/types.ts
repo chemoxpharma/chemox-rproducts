@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          id: string
+          role: string | null
+          email: string | null
+        }
+        Insert: {
+          id: string
+          role?: string | null
+          email?: string | null
+        }
+        Update: {
+          id?: string
+          role?: string | null
+          email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          id: string
+          sr_no: number | null
+          name: string | null
+          compliance_list: string[] | null
+          therapeutic: string | null
+          cas_no: string | null
+          category: string | null
+          prices: Json | null
+        }
+        Insert: {
+          id: string
+          sr_no?: number | null
+          name?: string | null
+          compliance_list?: string[] | null
+          therapeutic?: string | null
+          cas_no?: string | null
+          category?: string | null
+          prices?: Json | null
+        }
+        Update: {
+          id?: string
+          sr_no?: number | null
+          name?: string | null
+          compliance_list?: string[] | null
+          therapeutic?: string | null
+          cas_no?: string | null
+          category?: string | null
+          prices?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
