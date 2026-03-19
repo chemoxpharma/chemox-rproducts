@@ -17,6 +17,8 @@ const Index = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
+  const [pdcPercentage, setPdcPercentage] = useState(3.5);
+
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -67,6 +69,12 @@ const Index = () => {
     if (!product) return;
 
     const newPrices = { ...product.prices, [priceKey]: price };
+    
+    // Auto-calculate PDC if IP is updated
+    if (priceKey === "IP" && price !== null) {
+      const calculatedPdc = Math.round(price * (1 + pdcPercentage / 100));
+      newPrices["pdc"] = calculatedPdc;
+    }
     
     updatePriceMutation.mutate({ id, prices: newPrices });
     
@@ -145,6 +153,8 @@ const Index = () => {
                   category={cat}
                   onUpdatePrice={handleUpdatePrice}
                   isAdmin={isAdmin}
+                  pdcPercentage={pdcPercentage}
+                  onPdcPercentageChange={setPdcPercentage}
                 />
               );
             })}

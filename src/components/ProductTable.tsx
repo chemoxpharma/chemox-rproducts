@@ -17,6 +17,8 @@ interface ProductTableProps {
   category: ProductCategory;
   onUpdatePrice: (id: string, priceKey: string, price: number | null) => void;
   isAdmin: boolean;
+  pdcPercentage: number;
+  onPdcPercentageChange: (value: number) => void;
 }
 
 const categoryBadgeMap: Record<ProductCategory, string> = {
@@ -35,7 +37,14 @@ const complianceBadgeColors: Record<string, string> = {
   pdc: "bg-amber-100 text-amber-800 border-amber-200",
 };
 
-export function ProductTable({ products, category, onUpdatePrice, isAdmin }: ProductTableProps) {
+export function ProductTable({ 
+  products, 
+  category, 
+  onUpdatePrice, 
+  isAdmin, 
+  pdcPercentage, 
+  onPdcPercentageChange 
+}: ProductTableProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -128,7 +137,23 @@ export function ProductTable({ products, category, onUpdatePrice, isAdmin }: Pro
               <TableHead className="font-semibold font-mono">CAS No.</TableHead>
               <TableHead className="font-semibold">Compliance Pricing (₹/kg)</TableHead>
               <TableHead className="font-semibold">Advance Price (₹/kg)</TableHead>
-              <TableHead className="font-semibold">PDC Price (₹/kg)</TableHead>
+              <TableHead className="font-semibold">
+                <div className="flex flex-col gap-1">
+                  <span className="whitespace-nowrap">PDC Price (90 Days)</span>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Input
+                        type="number"
+                        value={pdcPercentage}
+                        onChange={(e) => onPdcPercentageChange(parseFloat(e.target.value) || 0)}
+                        className="w-16 h-6 text-[10px] px-1 bg-card"
+                        step="0.5"
+                      />
+                      <span className="text-[10px] text-muted-foreground">% add</span>
+                    </div>
+                  )}
+                </div>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
