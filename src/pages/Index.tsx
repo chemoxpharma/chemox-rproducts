@@ -57,7 +57,7 @@ const Index = () => {
     },
   });
 
-  const handleUpdatePrice = (id: string, compliance: ComplianceType, price: number | null) => {
+  const handleUpdatePrice = (id: string, priceKey: string, price: number | null) => {
     if (!isAdmin) {
       toast.error("Only admins can update prices");
       return;
@@ -66,11 +66,12 @@ const Index = () => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
 
-    const newPrices = { ...product.prices, [compliance]: price };
+    const newPrices = { ...product.prices, [priceKey]: price };
     
     updatePriceMutation.mutate({ id, prices: newPrices });
     
-    toast.success(`${compliance} price updated for ${product.name}`, {
+    const label = priceKey === "advance" ? "Advance payment" : priceKey === "pdc" ? "PDC" : priceKey;
+    toast.success(`${label} price updated for ${product.name}`, {
       description: price !== null ? `₹${price.toLocaleString("en-IN")}/kg` : "Price cleared",
     });
   };
@@ -90,8 +91,8 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">C</span>
+              <div className="h-10 w-10 flex items-center justify-center overflow-hidden">
+                <img src="/Chemox Logo.png" alt="Chemox Pharma" className="h-full w-auto object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-foreground leading-tight">ChemoxPharma</h1>

@@ -15,7 +15,7 @@ import {
 interface ProductTableProps {
   products: Product[];
   category: ProductCategory;
-  onUpdatePrice: (id: string, compliance: ComplianceType, price: number | null) => void;
+  onUpdatePrice: (id: string, priceKey: string, price: number | null) => void;
   isAdmin: boolean;
 }
 
@@ -25,12 +25,14 @@ const categoryBadgeMap: Record<ProductCategory, string> = {
   rnd: "bg-category-rnd text-primary-foreground",
 };
 
-const complianceBadgeColors: Record<ComplianceType, string> = {
+const complianceBadgeColors: Record<string, string> = {
   IP: "bg-blue-100 text-blue-800 border-blue-200",
   BP: "bg-emerald-100 text-emerald-800 border-emerald-200",
   EP: "bg-violet-100 text-violet-800 border-violet-200",
   USP: "bg-orange-100 text-orange-800 border-orange-200",
   IH: "bg-rose-100 text-rose-800 border-rose-200",
+  advance: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  pdc: "bg-amber-100 text-amber-800 border-amber-200",
 };
 
 export function ProductTable({ products, category, onUpdatePrice, isAdmin }: ProductTableProps) {
@@ -39,16 +41,16 @@ export function ProductTable({ products, category, onUpdatePrice, isAdmin }: Pro
 
   const filtered = products.filter((p) => p.category === category);
 
-  const startEdit = (productId: string, comp: ComplianceType, currentPrice: number | null) => {
+  const startEdit = (productId: string, priceKey: string, currentPrice: number | null) => {
     if (!isAdmin) return;
-    setEditingKey(`${productId}-${comp}`);
+    setEditingKey(`${productId}-${priceKey}`);
     setEditValue(currentPrice !== null ? String(currentPrice) : "");
   };
 
-  const saveEdit = (productId: string, comp: ComplianceType) => {
+  const saveEdit = (productId: string, priceKey: string) => {
     if (!isAdmin) return;
     const val = editValue.trim();
-    onUpdatePrice(productId, comp, val === "" ? null : parseFloat(val));
+    onUpdatePrice(productId, priceKey, val === "" ? null : parseFloat(val));
     setEditingKey(null);
     setEditValue("");
   };
@@ -56,6 +58,54 @@ export function ProductTable({ products, category, onUpdatePrice, isAdmin }: Pro
   const cancelEdit = () => {
     setEditingKey(null);
     setEditValue("");
+  };
+
+  const renderPriceBadge = (product: Product, priceKey: string, label?: string) => {
+    const key = `${product.id}-${priceKey}`;
+    const price = product.prices[priceKey] ?? null;
+    const isEditing = editingKey === key;
+    const badgeColor = complianceBadgeColors[priceKey] || "bg-gray-100 text-gray-800 border-gray-200";
+
+    return (
+      <div
+        key={key}
+        className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${badgeColor}`}
+      >
+        <span className="font-semibold min-w-[28px]">{label || priceKey}</span>
+        {isEditing ? (
+          <div className="flex items-center gap-0.5">
+            <Input
+              type="number"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveEdit(product.id, priceKey);
+                if (e.key === "Escape") cancelEdit();
+              }}
+              className="w-20 h-5 text-xs text-right font-mono px-1 bg-card border-none"
+              placeholder="Price"
+              autoFocus
+            />
+            <button onClick={() => saveEdit(product.id, priceKey)} className="p-0.5 hover:opacity-70">
+              <Check className="h-3 w-3" />
+            </button>
+            <button onClick={cancelEdit} className="p-0.5 hover:opacity-70">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <div 
+            className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer' : ''}`} 
+            onClick={() => isAdmin && startEdit(product.id, priceKey, price)}
+          >
+            <span className="font-mono">
+              {price !== null ? `₹${price.toLocaleString("en-IN")}` : "—"}
+            </span>
+            {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -76,7 +126,9 @@ export function ProductTable({ products, category, onUpdatePrice, isAdmin }: Pro
               <TableHead className="font-semibold">Product Name</TableHead>
               <TableHead className="font-semibold">Therapeutic Use</TableHead>
               <TableHead className="font-semibold font-mono">CAS No.</TableHead>
-              <TableHead className="font-semibold">Pricing by Compliance (₹/kg)</TableHead>
+              <TableHead className="font-semibold">Compliance Pricing (₹/kg)</TableHead>
+              <TableHead className="font-semibold">Advance Price (₹/kg)</TableHead>
+              <TableHead className="font-semibold">PDC Price (₹/kg)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,53 +142,14 @@ export function ProductTable({ products, category, onUpdatePrice, isAdmin }: Pro
                 <TableCell className="font-mono text-sm text-muted-foreground">{product.casNo}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
-                    {product.complianceList.map((comp) => {
-                      const key = `${product.id}-${comp}`;
-                      const price = product.prices[comp] ?? null;
-                      const isEditing = editingKey === key;
-
-                      return (
-                        <div
-                          key={key}
-                          className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${complianceBadgeColors[comp]}`}
-                        >
-                          <span className="font-semibold min-w-[28px]">{comp}</span>
-                          {isEditing ? (
-                            <div className="flex items-center gap-0.5">
-                              <Input
-                                type="number"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveEdit(product.id, comp);
-                                  if (e.key === "Escape") cancelEdit();
-                                }}
-                                className="w-20 h-5 text-xs text-right font-mono px-1 bg-card border-none"
-                                placeholder="Price"
-                                autoFocus
-                              />
-                              <button onClick={() => saveEdit(product.id, comp)} className="p-0.5 hover:opacity-70">
-                                <Check className="h-3 w-3" />
-                              </button>
-                              <button onClick={cancelEdit} className="p-0.5 hover:opacity-70">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div 
-                              className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer' : ''}`} 
-                              onClick={() => isAdmin && startEdit(product.id, comp, price)}
-                            >
-                              <span className="font-mono">
-                                {price !== null ? `₹${price.toLocaleString("en-IN")}` : "—"}
-                              </span>
-                              {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {product.complianceList.map((comp) => renderPriceBadge(product, comp))}
                   </div>
+                </TableCell>
+                <TableCell>
+                  {renderPriceBadge(product, "advance", "ADV")}
+                </TableCell>
+                <TableCell>
+                  {renderPriceBadge(product, "pdc", "PDC")}
                 </TableCell>
               </TableRow>
             ))}

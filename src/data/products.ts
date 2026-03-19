@@ -10,7 +10,7 @@ export interface Product {
   therapeutic: string;
   casNo: string;
   category: ProductCategory;
-  prices: Partial<Record<ComplianceType, number | null>>;
+  prices: Record<string, number | null>;
 }
 
 export const categoryLabels: Record<ProductCategory, string> = {
