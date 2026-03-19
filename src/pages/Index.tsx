@@ -92,7 +92,7 @@ const Index = () => {
     
     updatePriceMutation.mutate({ id, prices: newPrices });
     
-    const label = priceKey === "advance" ? "Advance payment" : priceKey === "pdc" ? "PDC" : priceKey;
+    const label = priceKey === "pdc" ? "PDC" : priceKey;
     
     if (pdcUpdated) {
       toast.success(`${label} price updated`, {

@@ -33,7 +33,6 @@ const complianceBadgeColors: Record<string, string> = {
   EP: "bg-violet-100 text-violet-800 border-violet-200",
   USP: "bg-orange-100 text-orange-800 border-orange-200",
   IH: "bg-rose-100 text-rose-800 border-rose-200",
-  advance: "bg-indigo-100 text-indigo-800 border-indigo-200",
   pdc: "bg-amber-100 text-amber-800 border-amber-200",
 };
 
@@ -149,7 +148,6 @@ export function ProductTable({
               <TableHead className="font-bold text-foreground text-base">Therapeutic Use</TableHead>
               <TableHead className="font-bold text-foreground text-base font-mono">CAS No.</TableHead>
               <TableHead className="font-bold text-foreground text-base">Compliance Pricing (₹/kg)</TableHead>
-              <TableHead className="font-bold text-foreground text-base">Advance Price (₹/kg)</TableHead>
               <TableHead className="font-bold text-foreground text-base">
                 <div className="flex flex-col gap-1">
                   <span className="whitespace-nowrap">PDC Price (90 Days)</span>
@@ -182,9 +180,6 @@ export function ProductTable({
                   <div className="flex flex-wrap gap-2">
                     {product.complianceList.map((comp) => renderPriceBadge(product, comp))}
                   </div>
-                </TableCell>
-                <TableCell>
-                  {renderPriceBadge(product, "advance", "ADV")}
                 </TableCell>
                 <TableCell>
                   {renderPriceBadge(product, "pdc", "PDC")}
