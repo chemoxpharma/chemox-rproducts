@@ -71,18 +71,31 @@ export function ProductTable({
 
   const renderPriceBadge = (product: Product, priceKey: string, label?: string) => {
     const key = `${product.id}-${priceKey}`;
-    const price = product.prices[priceKey] ?? null;
+    let price = (product.prices[priceKey] ?? null) as number | null;
+    let isAutoValue = false;
+
+    // Auto-calculate PDC if missing but IP exists
+    if (priceKey === "pdc" && price === null) {
+      // Look for IP regardless of case
+      const ipKey = Object.keys(product.prices).find(k => k.toUpperCase() === "IP");
+      const ipPrice = ipKey ? (product.prices[ipKey] as number | null) : null;
+      if (ipPrice !== null) {
+        price = Math.round(ipPrice * (1 + pdcPercentage / 100));
+        isAutoValue = true;
+      }
+    }
+
     const isEditing = editingKey === key;
     const badgeColor = complianceBadgeColors[priceKey] || "bg-gray-100 text-gray-800 border-gray-200";
 
     return (
       <div
         key={key}
-        className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${badgeColor}`}
+        className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${badgeColor} ${isAutoValue ? 'border-dashed opacity-80' : ''}`}
       >
-        <span className="font-semibold min-w-[28px]">{label || priceKey}</span>
+        <span className="font-semibold min-w-[32px]">{label || priceKey}</span>
         {isEditing ? (
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1">
             <Input
               type="number"
               value={editValue}
@@ -91,26 +104,26 @@ export function ProductTable({
                 if (e.key === "Enter") saveEdit(product.id, priceKey);
                 if (e.key === "Escape") cancelEdit();
               }}
-              className="w-20 h-5 text-xs text-right font-mono px-1 bg-card border-none"
+              className="w-24 h-6 text-sm text-right font-mono px-1 bg-card border-none"
               placeholder="Price"
               autoFocus
             />
             <button onClick={() => saveEdit(product.id, priceKey)} className="p-0.5 hover:opacity-70">
-              <Check className="h-3 w-3" />
+              <Check className="h-4 w-4" />
             </button>
             <button onClick={cancelEdit} className="p-0.5 hover:opacity-70">
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         ) : (
           <div 
-            className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer' : ''}`} 
+            className={`flex items-center gap-1.5 ${isAdmin ? 'cursor-pointer' : ''}`} 
             onClick={() => isAdmin && startEdit(product.id, priceKey, price)}
           >
-            <span className="font-mono">
+            <span className={`font-mono ${isAutoValue ? 'italic' : ''}`}>
               {price !== null ? `₹${price.toLocaleString("en-IN")}` : "—"}
             </span>
-            {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />}
+            {isAdmin && <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />}
           </div>
         )}
       </div>
@@ -131,13 +144,13 @@ export function ProductTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="w-12 text-center font-semibold">#</TableHead>
-              <TableHead className="font-semibold">Product Name</TableHead>
-              <TableHead className="font-semibold">Therapeutic Use</TableHead>
-              <TableHead className="font-semibold font-mono">CAS No.</TableHead>
-              <TableHead className="font-semibold">Compliance Pricing (₹/kg)</TableHead>
-              <TableHead className="font-semibold">Advance Price (₹/kg)</TableHead>
-              <TableHead className="font-semibold">
+              <TableHead className="w-14 text-center font-bold text-foreground">#</TableHead>
+              <TableHead className="font-bold text-foreground text-base">Product Name</TableHead>
+              <TableHead className="font-bold text-foreground text-base">Therapeutic Use</TableHead>
+              <TableHead className="font-bold text-foreground text-base font-mono">CAS No.</TableHead>
+              <TableHead className="font-bold text-foreground text-base">Compliance Pricing (₹/kg)</TableHead>
+              <TableHead className="font-bold text-foreground text-base">Advance Price (₹/kg)</TableHead>
+              <TableHead className="font-bold text-foreground text-base">
                 <div className="flex flex-col gap-1">
                   <span className="whitespace-nowrap">PDC Price (90 Days)</span>
                   {isAdmin && (
@@ -146,10 +159,10 @@ export function ProductTable({
                         type="number"
                         value={pdcPercentage}
                         onChange={(e) => onPdcPercentageChange(parseFloat(e.target.value) || 0)}
-                        className="w-16 h-6 text-[10px] px-1 bg-card"
+                        className="w-20 h-7 text-xs px-2 bg-card"
                         step="0.5"
                       />
-                      <span className="text-[10px] text-muted-foreground">% add</span>
+                      <span className="text-xs text-muted-foreground font-normal">% add</span>
                     </div>
                   )}
                 </div>
@@ -159,12 +172,12 @@ export function ProductTable({
           <TableBody>
             {filtered.map((product) => (
               <TableRow key={product.id} className="group hover:bg-accent/30 transition-colors">
-                <TableCell className="text-center text-muted-foreground font-mono text-sm">
+                <TableCell className="text-center text-muted-foreground font-mono text-base">
                   {product.srNo}
                 </TableCell>
-                <TableCell className="font-medium text-foreground">{product.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{product.therapeutic}</TableCell>
-                <TableCell className="font-mono text-sm text-muted-foreground">{product.casNo}</TableCell>
+                <TableCell className="font-bold text-foreground text-lg">{product.name}</TableCell>
+                <TableCell className="text-muted-foreground text-base">{product.therapeutic}</TableCell>
+                <TableCell className="font-mono text-base text-muted-foreground">{product.casNo}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
                     {product.complianceList.map((comp) => renderPriceBadge(product, comp))}

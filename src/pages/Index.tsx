@@ -19,6 +19,14 @@ const Index = () => {
 
   const [pdcPercentage, setPdcPercentage] = useState(3.5);
 
+  const handlePdcPercentageChange = (val: number) => {
+    setPdcPercentage(val);
+    toast.info(`PDC Calculation set to ${val}%`, {
+      description: "This percentage will be applied automatically when any IP price is updated.",
+      duration: 2000,
+    });
+  };
+
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -68,20 +76,33 @@ const Index = () => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
 
-    const newPrices = { ...product.prices, [priceKey]: price };
+    // Use a case-insensitive check for IP
+    const isIP = priceKey.trim().toUpperCase() === "IP";
+    const newPrices = { ...(product.prices as Record<string, number | null>), [priceKey]: price };
     
+    let pdcUpdated = false;
+    let newPdcValue = null;
+
     // Auto-calculate PDC if IP is updated
-    if (priceKey === "IP" && price !== null) {
-      const calculatedPdc = Math.round(price * (1 + pdcPercentage / 100));
-      newPrices["pdc"] = calculatedPdc;
+    if (isIP && price !== null) {
+      newPdcValue = Math.round(price * (1 + pdcPercentage / 100));
+      newPrices["pdc"] = newPdcValue;
+      pdcUpdated = true;
     }
     
     updatePriceMutation.mutate({ id, prices: newPrices });
     
     const label = priceKey === "advance" ? "Advance payment" : priceKey === "pdc" ? "PDC" : priceKey;
-    toast.success(`${label} price updated for ${product.name}`, {
-      description: price !== null ? `₹${price.toLocaleString("en-IN")}/kg` : "Price cleared",
-    });
+    
+    if (pdcUpdated) {
+      toast.success(`${label} price updated`, {
+        description: `IP: ₹${price?.toLocaleString("en-IN")} → PDC: ₹${newPdcValue?.toLocaleString("en-IN")} (+${pdcPercentage}%)`,
+      });
+    } else {
+      toast.success(`${label} price updated for ${product.name}`, {
+        description: price !== null ? `₹${price.toLocaleString("en-IN")}/kg` : "Price cleared",
+      });
+    }
   };
 
   const filtered = search
@@ -96,7 +117,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 flex items-center justify-center overflow-hidden">
@@ -154,7 +175,7 @@ const Index = () => {
                   onUpdatePrice={handleUpdatePrice}
                   isAdmin={isAdmin}
                   pdcPercentage={pdcPercentage}
-                  onPdcPercentageChange={setPdcPercentage}
+                  onPdcPercentageChange={handlePdcPercentageChange}
                 />
               );
             })}
